@@ -64,13 +64,13 @@ if __name__ == "__main__":
   csv_file.to_csv(save_path,index=False)
   ###############################################
   # Save feature
-  feature_dir = './mid_feature/{}'.format(VERSION)
-  if not os.path.exists(feature_dir):
-    os.makedirs(feature_dir)
-  from converter.common_utils import save_as_hdf5
-  for i in range(len(id_list)):
-    name = str(id_list[i])+'.hdf5'
-    feature_path = os.path.join(feature_dir,name)
-    save_as_hdf5(feature_in[i],feature_path,'feature_in')   
-    save_as_hdf5(feature_out[i],feature_path,'feature_out') 
+  # feature_dir = './mid_feature/{}'.format(VERSION)
+  # if not os.path.exists(feature_dir):
+  #   os.makedirs(feature_dir)
+  # from converter.common_utils import save_as_hdf5
+  # for i in range(len(id_list)):
+  #   name = str(id_list[i])+'.hdf5'
+  #   feature_path = os.path.join(feature_dir,name)
+  #   save_as_hdf5(feature_in[i],feature_path,'feature_in')   
+  #   save_as_hdf5(feature_out[i],feature_path,'feature_out') 
   ###############################################  

@@ -34,7 +34,8 @@ class VolumeClassifier(object):
   - weight_path: weight path of pre-trained model
   '''
   def __init__(self,net_name=None,lr=1e-3,n_epoch=1,channels=1,num_classes=3,input_shape=None,crop=48,
-                batch_size=6,num_workers=0,device=None,pre_trained=False,weight_path=None): 
+                batch_size=6,num_workers=0,device=None,pre_trained=False,weight_path=None,weight_decay=0.,
+                momentum=0.95,gamma=0.1,milestones=[40,80],T_max=5): 
     super(VolumeClassifier,self).__init__()    
 
     self.net_name = net_name
@@ -56,6 +57,12 @@ class VolumeClassifier(object):
     # save the middle output
     self.feature_in = []
     self.feature_out = []
+
+    self.weight_decay = weight_decay
+    self.momentum = momentum
+    self.gamma = gamma
+    self.milestones = milestones
+    self.T_max = T_max
     
     os.environ['CUDA_VISIBLE_DEVICES'] = self.device
     
@@ -349,6 +356,10 @@ class VolumeClassifier(object):
     if net_name == 'r3d_18':
       from model.resnet_3d import r3d_18
       net = r3d_18(input_channels=self.channels,num_classes=self.num_classes)
+      
+    elif net_name == 'r3d_conv_18':
+      from model.resnet_conv_3d import r3d_conv_18
+      net = r3d_conv_18(input_channels=self.channels,num_classes=self.num_classes)
 
     elif net_name == 'mc3_18':
       from model.resnet_3d import mc3_18
@@ -388,10 +399,10 @@ class VolumeClassifier(object):
 
   def _get_optimizer(self,optimizer,net,lr):
     if optimizer == 'Adam':
-      optimizer = torch.optim.Adam(net.parameters(),lr=lr)  
+      optimizer = torch.optim.Adam(net.parameters(),lr=lr,weight_decay=self.weight_decay)  
 
     elif optimizer == 'SGD':
-      optimizer = torch.optim.SGD(net.parameters(),lr=lr,momentum=0.9)
+      optimizer = torch.optim.SGD(net.parameters(),lr=lr,momentum=self.momentum)
 
     return optimizer   
 
@@ -400,7 +411,12 @@ class VolumeClassifier(object):
     if lr_scheduler == 'ReduceLROnPlateau':
       lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                        mode='min',patience=5,verbose=True)
-    
+    elif lr_scheduler == 'MultiStepLR':
+      lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                       optimizer, self.milestones, gamma=self.gamma)
+    elif lr_scheduler == 'CosineAnnealingLR':
+      lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                       optimizer, T_max=self.T_max)
     return lr_scheduler
   
   

@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier,ExtraTreesClassifier
 from sklearn.ensemble import BaggingClassifier
 from sklearn.neural_network import MLPClassifier
-from xgboost import XGBClassifier
+from xgboost import XGBClassifier,XGBRFClassifier
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split,KFold
@@ -51,8 +51,16 @@ params_dict = {
   'xgboost':{
     'n_estimators':range(10,50,5),
     'max_depth':range(2,15,1),
-    'learning_rate':np.linspace(0.01,2,20),
-    'subsample':np.linspace(0.7,0.9,20),
+    'learning_rate':np.linspace(0.01,2,10),
+    'subsample':np.linspace(0.7,0.9,10),
+    'colsample_bytree':np.linspace(0.5,0.98,10),
+    'min_child_weight':range(1,9,1)
+  },
+  'xgboost_rf':{
+    'n_estimators':range(10,50,5),
+    'max_depth':range(2,15,1),
+    'learning_rate':np.linspace(0.01,2,10),
+    'subsample':np.linspace(0.7,0.9,10),
     'colsample_bytree':np.linspace(0.5,0.98,10),
     'min_child_weight':range(1,9,1)
   }
@@ -81,7 +89,7 @@ class ML_Classifier(object):
     self.clf = self._get_clf()  
   
 
-  def trainer(self,df,target_key,test_size=0.2,random_state=21,metric=None,k_fold=5):
+  def trainer(self,df,target_key,test_size=0.2,random_state=21,metric=None,k_fold=5,scaler_flag=False):
     params = self.params
     data_x,target_y = self.extract_df(df,target_key,random_state) 
     
@@ -89,20 +97,24 @@ class ML_Classifier(object):
                                             random_state=random_state,
                                             test_size=test_size,
                                             shuffle=True)
-  
+    if scaler_flag:
+      scaler = StandardScaler()
+      x_train = scaler.fit_transform(x_train)
+      x_test= scaler.fit_transform(x_test)
+    
     kfold = KFold(n_splits=k_fold)
     grid = GridSearchCV(estimator=self.clf,
                         param_grid=params,
                         cv=kfold,
                         scoring=metric,
-                        refit='Accuracy',
+                        refit='Recall',
                         return_train_score=True)
     grid = grid.fit(x_train,y_train)
 
     best_score = grid.best_score_
     best_model = grid.best_estimator_
     test_score = best_model.score(x_test,y_test)
-    print("Accuracy Evaluation:")
+    print("Recall Evaluation:")
     print("Best score:{}".format(best_score))
     print("Test score:{}".format(test_score))
     
@@ -150,7 +162,9 @@ class ML_Classifier(object):
       classifer = MLPClassifier(max_iter=2000,warm_start=True,random_state=0)
     elif self.clf_name == 'xgboost':
       classifer = XGBClassifier()
-
+    elif self.clf_name == 'xgboost_rf':
+      classifer = XGBRFClassifier()  
+    
     return classifer  
 
 
