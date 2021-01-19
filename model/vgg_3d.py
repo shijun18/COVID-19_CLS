@@ -78,7 +78,7 @@ class VGG(nn.Module):
         layers += [nn.MaxPool3d(kernel_size=2, stride=2)]
       # 'C': use convolutional layer as downsampling 
       elif v == 'C':
-        layers += nn.Conv3d(in_channels,in_channels,kernel_size=1, stride=2, bias=False)
+        layers += nn.Conv3d(in_channels,in_channels,kernel_size=3, stride=2, bias=False)
         layers += nn.BatchNorm3d(in_channels)
       else:
         conv3d = nn.Conv3d(in_channels, v, kernel_size=3, padding=1)

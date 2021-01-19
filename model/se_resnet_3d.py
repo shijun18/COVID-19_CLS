@@ -6,7 +6,6 @@ import torch.nn as nn
 from model.resnet_3d import _volume_resnet,Conv3DSimple,BasicStem,Conv3DNoTemporal
 
 
-
 class SELayer(nn.Module):
   def __init__(self, channel, reduction=16):
       super(SELayer, self).__init__()
@@ -144,7 +143,7 @@ def se_mc3_18(pretrained=False, progress=True, **kwargs):
         nn.Module: SE_MC3-18 network
     """
 
-    return _volume_resnet('se_r3d_18',
+    return _volume_resnet('se_mc3_18',
                          pretrained, progress,
                          block=SEBasicBlock,
                          conv_makers=[Conv3DSimple] + [Conv3DNoTemporal] * 3,

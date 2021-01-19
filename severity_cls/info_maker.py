@@ -55,7 +55,7 @@ if __name__ == "__main__":
   label_dict = csv_reader_single(label_path,key_col='id',value_col='label')
 
   classifier = VolumeClassifier(**INIT_TRAINER)
-  result,feature_in,feature_out = classifier.inference(path_list,label_dict,,hook_fn_forward=True)
+  result,feature_in,feature_out = classifier.inference(path_list,label_dict,hook_fn_forward=True)
   csv_file['Score'] = [round(case[1],4) for case in result['prob']]
   print(len(csv_file['Score']))
   csv_file['true'] = result['true']

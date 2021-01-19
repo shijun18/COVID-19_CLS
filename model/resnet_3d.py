@@ -17,6 +17,7 @@ __all__ = ['r3d_18', 'mc3_18', 'r2plus1d_18','se_r3d_18','se_mc3_18']
 
 model_urls = {
   'r3d_18':None, 
+  'r3d_34':None,
   'mc3_18':None, 
   'r2plus1d_18':None,
   'se_r3d_18':None,
@@ -351,14 +352,32 @@ def r2plus1d_18(pretrained=False, progress=True, **kwargs):
                          stem=R2Plus1dStem, **kwargs)
 
 
+def r3d_34(pretrained=False, progress=True, **kwargs):
+    """Construct 34 layer Resnet3D model as in
+    https://arxiv.org/abs/1711.11248
+
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on Kinetics-400
+        progress (bool): If True, displays a progress bar of the download to stderr
+
+    Returns:
+        nn.Module: R3D-18 network
+    """
+
+    return _volume_resnet('r3d_34',
+                         pretrained, progress,
+                         block=BasicBlock,
+                         conv_makers=[Conv3DSimple] * 4,
+                         layers=[3, 4, 6, 3],
+                         stem=BasicStem, **kwargs)
 
 
 if __name__ == "__main__":
   
-  net = r3d_18(input_channels=1,num_classes=3)
+  net = r3d_34(input_channels=1,num_classes=3)
 
   from torchsummary import summary
   import os 
-  os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+  os.environ['CUDA_VISIBLE_DEVICES'] = '0'
   net = net.cuda()
   summary(net,input_size=(1,64,224,224),batch_size=1,device='cuda')

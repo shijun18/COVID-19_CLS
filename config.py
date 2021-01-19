@@ -1,34 +1,44 @@
  
 __all__ = ['r3d_18', 'mc3_18', 'r2plus1d_18','se_r3d_18','vgg16_3d','vgg19_3d',\
-          'se_mc3_18','r3d_conv_18']
+          'se_mc3_18','da_mc3_18','da_se_mc3_18','da_18','da_se_18','r3d_34']
 
+from utils import get_weight_path
 
-NET_NAME = 'r3d_conv_18'
-VERSION = 'v8.0'
-DEVICE = '2'
+NET_NAME = 'se_r3d_18'
+VERSION = 'v4.4'
+DEVICE = '6'
 # Must be True when pre-training and inference
-PRE_TRAINED = False 
+PRE_TRAINED = True 
 # 1,2,3,4,5
-CURRENT_FOLD = 1
+CURRENT_FOLD = 5
 GPU_NUM = len(DEVICE.split(','))
 
 
+# WEIGHT_PATH = {
+#   'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:28-train_loss:0.15993-val_loss:0.31931.pth'.format(VERSION),#1.0
+#   'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:24-train_loss:0.14345-val_loss:0.14227.pth'.format(VERSION),#4.3
+#   'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:27-train_loss:0.14407-val_loss:0.14218.pth'.format(VERSION),#10.1
+#   'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),#11.0
+# }
+
 WEIGHT_PATH = {
-  'r3d_18':'./ckpt/{}/epoch:18-train_loss:0.21740-val_loss:0.16584.pth'.format(VERSION),
-  'mc3_18':'./ckpt/{}/epoch:17-train_loss:0.31278-val_loss:0.23510.pth'.format(VERSION),
-  'r2plus1d_18':'./ckpt/{}/epoch:14-train_loss:0.31134-val_loss:1.51052.pth'.format(VERSION),
-  'se_r3d_18':'./ckpt/{}/epoch:24-train_loss:0.21298-val_loss:0.16938.pth'.format(VERSION),
-  'vgg16_3d':'./ckpt/{}/epoch:37-train_loss:0.13268-val_loss:0.13816.pth'.format(VERSION),
-  'vgg19_3d':'./ckpt/{}/epoch:34-train_loss:0.14165-val_loss:0.11818.pth'.format(VERSION),
-  'se_mc3_18':'./ckpt/{}/epoch:38-train_loss:0.24484-val_loss:0.21495.pth'.format(VERSION),
-  'r3d_conv_18':'./ckpt/{}/'.format(VERSION)
+  'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format(VERSION),
+  'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.38945-val_loss:0.30332.pth'.format(VERSION),
+  'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:27-train_loss:0.14407-val_loss:0.14218.pth'.format(VERSION),
+  'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),
 }
+
+'''
+CKPT_PATH = './ckpt/{}'.format(VERSION)
+WEIGHT_PATH = get_weight_path(CKPT_PATH)
+print(WEIGHT_PATH)
+'''
 
 # Arguments when trainer initial
 INIT_TRAINER = {
   'net_name':NET_NAME,
   'lr':1e-3, 
-  'n_epoch':100,
+  'n_epoch':50,
   'channels':1,
   'num_classes':3,
   'input_shape':(64,224,224),
@@ -52,6 +62,6 @@ SETUP_TRAINER = {
   'optimizer':'Adam',
   'loss_fun':'Cross_Entropy',
   'class_weight':None,
-  'lr_scheduler':None
+  'lr_scheduler':'CosineAnnealingLR'
   }
 

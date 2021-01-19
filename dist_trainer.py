@@ -35,7 +35,8 @@ class Dist_VolumeClassifier(object):
   - weight_path: weight path of pre-trained model
   '''
   def __init__(self,net_name=None,lr=1e-3,n_epoch=1,channels=1,num_classes=3,input_shape=None,crop=48,
-                batch_size=6,num_workers=0,device=None,pre_trained=False,weight_path=None): 
+                batch_size=6,num_workers=0,device=None,pre_trained=False,weight_path=None,weight_decay=0.,
+                momentum=0.95,gamma=0.1,milestones=[40,80],T_max=5): 
     super(Dist_VolumeClassifier,self).__init__()    
 
     self.net_name = net_name
@@ -54,6 +55,12 @@ class Dist_VolumeClassifier(object):
     self.loss_threshold = 1.0
     self.pre_trained = pre_trained
     self.weight_path = weight_path
+
+    self.weight_decay = weight_decay
+    self.momentum = momentum
+    self.gamma = gamma
+    self.milestones = milestones
+    self.T_max = T_max
     
     os.environ['CUDA_VISIBLE_DEVICES'] = self.device
     
@@ -77,12 +84,17 @@ class Dist_VolumeClassifier(object):
     self.gpu_num = gpu_num
     torch.cuda.set_device(self.gpu_id)
     torch.manual_seed(0)
+    np.random.seed(0)
+    torch.cuda.manual_seed_all(0)
+    print('Device:{}'.format(self.device))
+    
+  
     self.global_step = self.start_epoch * math.ceil(len(train_path)/self.gpu_num/self.batch_size)
 
     print('GPU:{}'.format(self.gpu_id))
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
-
+    torch.backends.cudnn.deterministic = True
     if not os.path.exists(log_dir):
       os.makedirs(log_dir)
 
@@ -146,7 +158,7 @@ class Dist_VolumeClassifier(object):
       torch.cuda.empty_cache()
 
       if lr_scheduler is not None:
-        lr_scheduler.step(val_loss)
+        lr_scheduler.step(train_loss)
 
       if self.rank == 0:
 
@@ -370,6 +382,19 @@ class Dist_VolumeClassifier(object):
       from model.se_resnet_3d import se_mc3_18
       net = se_mc3_18(input_channels=self.channels,num_classes=self.num_classes)
 
+    elif net_name == 'da_mc3_18':
+      from model.da_resnet_3d import da_mc3_18
+      net = da_mc3_18(input_channels=self.channels,num_classes=self.num_classes)
+
+    elif net_name == 'da_se_mc3_18':
+      from model.da_resnet_3d import da_se_mc3_18
+      net = da_se_mc3_18(input_channels=self.channels,num_classes=self.num_classes)
+    
+    elif net_name == 'da_18':
+      from model.da_resnet_3d import da_18
+      net = da_18(input_channels=self.channels,num_classes=self.num_classes)
+    
+
     return net  
 
 
@@ -385,19 +410,24 @@ class Dist_VolumeClassifier(object):
 
   def _get_optimizer(self,optimizer,net,lr):
     if optimizer == 'Adam':
-      optimizer = torch.optim.Adam(net.parameters(),lr=lr)  
+      optimizer = torch.optim.Adam(net.parameters(),lr=lr,weight_decay=self.weight_decay)  
 
     elif optimizer == 'SGD':
-      optimizer = torch.optim.SGD(net.parameters(),lr=lr,momentum=0.9)
+      optimizer = torch.optim.SGD(net.parameters(),lr=lr,momentum=self.momentum)
 
-    return optimizer   
+    return optimizer     
 
 
   def _get_lr_scheduler(self,lr_scheduler,optimizer):
     if lr_scheduler == 'ReduceLROnPlateau':
       lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                        mode='min',patience=5,verbose=True)
-    
+    elif lr_scheduler == 'MultiStepLR':
+      lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                       optimizer, self.milestones, gamma=self.gamma)
+    elif lr_scheduler == 'CosineAnnealingLR':
+      lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                       optimizer, T_max=self.T_max)
     return lr_scheduler
   
   

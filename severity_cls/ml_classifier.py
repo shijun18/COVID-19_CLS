@@ -13,7 +13,7 @@ from xgboost import XGBClassifier,XGBRFClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split,KFold
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.metrics import classification_report
 
 
 params_dict = {
@@ -87,11 +87,12 @@ class ML_Classifier(object):
     self.clf_name = clf_name
     self.params = params
     self.clf = self._get_clf()  
+    np.random.seed(0)
   
 
   def trainer(self,df,target_key,test_size=0.2,random_state=21,metric=None,k_fold=5,scaler_flag=False):
     params = self.params
-    data_x,target_y = self.extract_df(df,target_key,random_state) 
+    data_x,target_y = self.extract_df(df,target_key) 
     
     x_train,x_test,y_train,y_test = train_test_split(data_x,target_y,
                                             random_state=random_state,
@@ -140,7 +141,14 @@ class ML_Classifier(object):
       for f in range(x_train.shape[1]):
         print("%2d) %-*s %f" % (f + 1,30, feat_labels[indices[f]], importances[indices[f]]))
 
-    return best_model
+
+    classifier = self._get_clf() 
+    classifier.set_params(**grid.best_params_)
+    classifier = classifier.fit(x_train,y_train) 
+    test_result = classifier.predict(x_test)
+    print(classification_report(y_test, test_result, target_names=['no_ill','ill'],output_dict=True))
+    test_prob = classifier.predict_proba(x_test)
+    return best_model,test_result,test_prob,y_test
 
     
   def _get_clf(self):
@@ -149,7 +157,7 @@ class ML_Classifier(object):
     elif self.clf_name == 'knn':
       classifer = KNeighborsClassifier()
     elif self.clf_name == 'svm':
-      classifer = SVC(kernel='rbf',random_state=0)
+      classifer = SVC(kernel='rbf',random_state=0,probability=True)
     elif self.clf_name == 'decision tree':
       classifer = DecisionTreeClassifier(random_state=0)
     elif self.clf_name == 'random forest':
@@ -168,7 +176,7 @@ class ML_Classifier(object):
     return classifer  
 
 
-  def extract_df(self,df,target_key,random_state):
+  def extract_df(self,df,target_key):
     y = df[target_key]
     del df[target_key]
     x = df
