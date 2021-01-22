@@ -184,7 +184,8 @@ class VolumeClassifier(object):
                   'optimizer':optimizer.state_dict()
                 }
 
-                file_name = 'epoch:{}-train_loss:{:.5f}-val_loss:{:.5f}.pth'.format(epoch,train_loss,val_loss)
+                file_name = 'epoch:{}-train_loss:{:.5f}-val_loss:{:.5f}-train_acc:{:.5f}-val_acc:{:.5f}.pth'.format(epoch,train_loss,val_loss,train_acc,val_acc)
+                print('Save as :',file_name)
                 save_path = os.path.join(output_dir,file_name)
 
                 torch.save(saver,save_path)

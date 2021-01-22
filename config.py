@@ -4,9 +4,9 @@ __all__ = ['r3d_18', 'mc3_18', 'r2plus1d_18','se_r3d_18','vgg16_3d','vgg19_3d',\
 
 from utils import get_weight_path
 
-NET_NAME = 'se_r3d_18'
-VERSION = 'v4.4'
-DEVICE = '6'
+NET_NAME = 'da_18'
+VERSION = 'v10.4'
+DEVICE = '4'
 # Must be True when pre-training and inference
 PRE_TRAINED = True 
 # 1,2,3,4,5
@@ -24,7 +24,7 @@ GPU_NUM = len(DEVICE.split(','))
 WEIGHT_PATH = {
   'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format(VERSION),
   'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.38945-val_loss:0.30332.pth'.format(VERSION),
-  'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:27-train_loss:0.14407-val_loss:0.14218.pth'.format(VERSION),
+  'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.32471-val_loss:0.25842.pth'.format(VERSION),
   'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),
 }
 
