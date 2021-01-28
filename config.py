@@ -4,9 +4,9 @@ __all__ = ['r3d_18', 'mc3_18', 'r2plus1d_18','se_r3d_18','vgg16_3d','vgg19_3d',\
 
 from utils import get_weight_path
 
-NET_NAME = 'da_18'
-VERSION = 'v10.4'
-DEVICE = '4'
+NET_NAME = 'se_r3d_18'
+VERSION = 'v4.4'
+DEVICE = '5'
 # Must be True when pre-training and inference
 PRE_TRAINED = True 
 # 1,2,3,4,5
@@ -21,12 +21,14 @@ GPU_NUM = len(DEVICE.split(','))
 #   'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),#11.0
 # }
 
-WEIGHT_PATH = {
+WEIGHT_PATH_DICT = {
   'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format(VERSION),
-  'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.38945-val_loss:0.30332.pth'.format(VERSION),
+  'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:15-train_loss:0.27431-val_loss:0.19606.pth'.format(VERSION),
   'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.32471-val_loss:0.25842.pth'.format(VERSION),
   'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),
 }
+
+WEIGHT_PATH = WEIGHT_PATH_DICT[NET_NAME]
 
 '''
 CKPT_PATH = './ckpt/{}'.format(VERSION)
@@ -47,7 +49,7 @@ INIT_TRAINER = {
   'num_workers':2,
   'device':DEVICE,
   'pre_trained':PRE_TRAINED,
-  'weight_path':WEIGHT_PATH[NET_NAME],
+  'weight_path':WEIGHT_PATH,
   'weight_decay': 0.,
   'momentum': 0.9,
   'gamma': 0.1,
