@@ -75,7 +75,7 @@ class VolumeClassifier(object):
 
 
     def trainer(self,train_path,val_path,label_dict,output_dir=None,log_dir=None,optimizer='Adam',
-                  loss_fun='Cross_Entropy',class_weight=None,lr_scheduler=None):
+                  loss_fun='Cross_Entropy',class_weight=None,lr_scheduler=None,cur_fold=0):
 
         torch.manual_seed(0)
         np.random.seed(0)
@@ -84,6 +84,9 @@ class VolumeClassifier(object):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
+        log_dir = '%s.%d'%(log_dir,cur_fold)
+        output_dir = '%s.%d'%(output_dir,cur_fold)
+        
         if os.path.exists(log_dir):
             if not self.pre_trained:
                 shutil.rmtree(log_dir)

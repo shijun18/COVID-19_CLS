@@ -48,11 +48,11 @@ def unzip_data(input_path,save_path):
 
 if __name__ == "__main__":
     
-  input_path = "/staff/shijun/dataset/Covid-19_CT"
-  save_path = "/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data"
+  # input_path = "/staff/shijun/dataset/Covid-19_CT"
+  # save_path = "/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data"
   
-  # input_path = "/staff/shijun/dataset/Covid-19_CT/NCP/COVID19-2.zip"
-  # save_path = "/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data/NCP/COVID19-2"
+  input_path = "/staff/shijun/dataset/Covid-19_CT/NCP/COVID19-2.zip"
+  save_path = "/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data/NCP/COVID19-2"
 
   # input_path = "/staff/shijun/dataset/Covid-19_CT/CP/CP-1.zip"
   # save_path = "/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data/CP/CP-1"

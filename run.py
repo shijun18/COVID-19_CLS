@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import argparse
 from trainer import VolumeClassifier
 import pandas as pd
@@ -9,6 +10,44 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
 import time
+
+
+
+def get_cross_validation_on_patient(path_list, fold_num, current_fold):
+
+    print('total scans:%d'%len(path_list))
+    patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
+    patient_list = list(set(patient_list))
+    print('total patients:%d'%len(path_list))
+
+    _len_ = len(patient_list) // fold_num
+    train_id = []
+    validation_id = []
+    end_index = current_fold * _len_
+    start_index = end_index - _len_
+    if current_fold == fold_num:
+        validation_id.extend(patient_list[start_index:])
+        train_id.extend(patient_list[:start_index])
+    else:
+        validation_id.extend(patient_list[start_index:end_index])
+        train_id.extend(patient_list[:start_index])
+        train_id.extend(patient_list[end_index:])
+
+    train_path = []
+    validation_path = []
+
+    for case in path_list:
+        if os.path.basename(case).split('_')[0] in train_id:
+            train_path.append(case)
+        else:
+            validation_path.append(case)
+
+    random.shuffle(train_path)
+    random.shuffle(validation_path)
+    print("Train set length ", len(train_path),
+          "Val set length", len(validation_path))
+
+    return train_path, validation_path
 
 
 def get_cross_validation(path_list, fold_num, current_fold):
@@ -42,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('-m',
                         '--mode',
                         default='train',
-                        choices=["train", "inf"],
+                        choices=["train-cross","train", "inf"],
                         help='choose the mode',
                         type=str)
     parser.add_argument('-s',
@@ -62,12 +101,28 @@ if __name__ == "__main__":
 
     # Training
     ###############################################
-    if args.mode == 'train':
+    if args.mode == 'train-cross':
         path_list = list(label_dict.keys())[:3600]
-        train_path, val_path = get_cross_validation(path_list, 5, CURRENT_FOLD)
+        for i in range(5):
+            print('===================fold %d==================='%(i+1))
+            train_path, val_path = get_cross_validation_on_patient(path_list, 5, i+1)
+            SETUP_TRAINER['train_path'] = train_path
+            SETUP_TRAINER['val_path'] = val_path
+            SETUP_TRAINER['label_dict'] = label_dict
+            SETUP_TRAINER['cur_fold'] = i
+
+            start_time = time.time()
+            classifier.trainer(**SETUP_TRAINER)
+
+            print('run time:%.4f' % (time.time() - start_time))
+    
+    elif args.mode == 'train':
+        path_list = list(label_dict.keys())[:3600]
+        train_path, val_path = get_cross_validation_on_patient(path_list, 5, CURRENT_FOLD+1)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['label_dict'] = label_dict
+        SETUP_TRAINER['cur_fold'] = CURRENT_FOLD
 
         start_time = time.time()
         classifier.trainer(**SETUP_TRAINER)
@@ -79,7 +134,7 @@ if __name__ == "__main__":
     ###############################################
     elif args.mode == 'inf':
         test_path = list(label_dict.keys())[3600:]
-        save_path = './analysis/result/{}.csv'.format(VERSION)
+        save_path = './analysis/result/{}-tmp.csv'.format(VERSION)
 
         start_time = time.time()
         if args.save == 'no' or args.save == 'n':
@@ -110,9 +165,13 @@ if __name__ == "__main__":
             target_names=['CP', 'NCP', 'Normal'],
             output_dict=True)
         print(cls_report)
-        print(confusion_matrix(result['true'], result['pred']))
+        cm = confusion_matrix(result['true'], result['pred'])
+        print(cm)
+        cls_report['CP']['specificity'] = np.sum(cm[1:,1:])/np.sum(cm[1:])
+        cls_report['NCP']['specificity'] = (cm[0,0] + cm[0,2] + cm[2,0] + cm[2,2])/(np.sum(cm[0]) + np.sum(cm[2]))
+        cls_report['Normal']['specificity'] = np.sum(cm[0:2,0:2])/np.sum(cm[:2])
         #save as csv
-        report_save_path = './analysis/result/{}_report.csv'.format(VERSION)
+        report_save_path = './analysis/result/{}_report-tmp.csv'.format(VERSION)
         report_csv_file = pd.DataFrame(cls_report)
-        report_csv_file.to_csv(save_path)
+        report_csv_file.to_csv(report_save_path)
     ###############################################

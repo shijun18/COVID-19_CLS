@@ -48,19 +48,21 @@ def convert_to_npy(input_path,save_path):
         patient_id = os.path.basename(input_path)
         ID.append(patient_id)
         hdf5_path = os.path.join(save_path,"%s.hdf5" % patient_id)
+
+        if not os.path.exists(hdf5_path):
         
-        try:
-          # convert image to numpy array with fixed 2d-dim: DIM(512,512)
-          item_list.sort(key=lambda x:int(x.split('.')[0]))
-          img_list = [img_reader(os.path.join(input_path,item),DIM) for item in item_list]
-          img_array = np.stack(img_list,axis=0) # (z,x,y)
+          try:
+            # convert image to numpy array with fixed 2d-dim: DIM(512,512)
+            item_list.sort(key=lambda x:int(x.split('.')[0]))
+            img_list = [img_reader(os.path.join(input_path,item),DIM) for item in item_list]
+            img_array = np.stack(img_list,axis=0) # (z,x,y)
 
-          # save as hdf5, key='img'
-          save_as_hdf5(img_array,hdf5_path,'img')
+            # save as hdf5, key='img'
+            save_as_hdf5(img_array,hdf5_path,'img')
 
-        except:
-          print(input_path)
-          pass
+          except:
+            print(input_path)
+            pass
 
       else:
         for item in item_list:
@@ -123,9 +125,9 @@ if __name__ == "__main__":
   print("NCP %d samples done"%len(patient_id))
 
 
-  input_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data/Normal'
-  save_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/npy_data/Normal'
-  patient_id = convert_to_npy(input_path,save_path)
-  print("Normal %d samples done"%len(patient_id))
+  # input_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/raw_data/Normal'
+  # save_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/npy_data/Normal'
+  # patient_id = convert_to_npy(input_path,save_path)
+  # print("Normal %d samples done"%len(patient_id))
  
   

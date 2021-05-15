@@ -1,16 +1,16 @@
  
-__all__ = ['r3d_18', 'mc3_18', 'r2plus1d_18','se_r3d_18','vgg16_3d','vgg19_3d',\
-          'se_mc3_18','da_mc3_18','da_se_mc3_18','da_18','da_se_18','r3d_34']
+__all__ = ['r3d_18', 'se_r3d_18','da_18','da_se_18','mc3_18', 'r2plus1d_18','r3d_34','vgg16_3d','vgg19_3d',\
+          'se_mc3_18','da_mc3_18','da_se_mc3_18']
 
 from utils import get_weight_path
 
-NET_NAME = 'se_r3d_18'
-VERSION = 'v4.4'
-DEVICE = '5'
+NET_NAME = 'da_se_18'
+VERSION = 'v11.0'
+DEVICE = '3'
 # Must be True when pre-training and inference
 PRE_TRAINED = True 
-# 1,2,3,4,5
-CURRENT_FOLD = 5
+# 0,1,2,3,4
+CURRENT_FOLD = 0
 GPU_NUM = len(DEVICE.split(','))
 
 
@@ -20,7 +20,7 @@ GPU_NUM = len(DEVICE.split(','))
 #   'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:27-train_loss:0.14407-val_loss:0.14218.pth'.format(VERSION),#10.1
 #   'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),#11.0
 # }
-
+'''
 WEIGHT_PATH_DICT = {
   'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format(VERSION),
   'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:15-train_loss:0.27431-val_loss:0.19606.pth'.format(VERSION),
@@ -29,12 +29,12 @@ WEIGHT_PATH_DICT = {
 }
 
 WEIGHT_PATH = WEIGHT_PATH_DICT[NET_NAME]
-
 '''
-CKPT_PATH = './ckpt/{}'.format(VERSION)
+
+CKPT_PATH = './new_ckpt/{}'.format(VERSION)
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
 print(WEIGHT_PATH)
-'''
+
 
 # Arguments when trainer initial
 INIT_TRAINER = {
@@ -59,8 +59,8 @@ INIT_TRAINER = {
 
 # Arguments when perform the trainer 
 SETUP_TRAINER = {
-  'output_dir':'./ckpt/{}'.format(VERSION),
-  'log_dir':'./log/{}'.format(VERSION),
+  'output_dir':'./new_ckpt/{}'.format(VERSION),
+  'log_dir':'./new_log/{}'.format(VERSION),
   'optimizer':'Adam',
   'loss_fun':'Cross_Entropy',
   'class_weight':None,
