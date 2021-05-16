@@ -58,19 +58,52 @@ def txt_reader_single(txt_file):
   return target_dict  
 
 
+def get_cross_validation_on_patient(path_list, fold_num, current_fold):
+    import os,random
+    print('total scans:%d'%len(path_list))
+    patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
+    patient_list = list(set(patient_list))
+    print('total patients:%d'%len(patient_list))
+    patient_list.sort(reverse=True)  
+
+    _len_ = len(patient_list) // fold_num
+    train_id = []
+    validation_id = []
+    
+
+    end_index = current_fold * _len_
+    start_index = end_index - _len_
+
+    validation_id.extend(patient_list[start_index:end_index])
+    train_id.extend(patient_list[:start_index])
+    train_id.extend(patient_list[end_index:_len_*(fold_num-1)])
+
+    train_path = []
+    validation_path = []
+    test_path = []
+
+    for case in path_list:
+        if os.path.basename(case).split('_')[0] in train_id:
+            train_path.append(case)
+        elif os.path.basename(case).split('_')[0] in validation_id:
+            validation_path.append(case)
+        else:
+            test_path.append(case)
+
+    random.shuffle(train_path)
+    random.shuffle(validation_path)
+    print("Train set length ", len(train_path),
+          "Val set length", len(validation_path),
+          'Test set len:',len(test_path))
+
+    return train_path, validation_path
+
 if __name__ == "__main__":
   
+
+  file_path = '/staff/shijun/torch_projects/COVID-19_CLS/converter/new_resize_shuffle_label.csv'
+  dict_1 = csv_reader_single(file_path,key_col='id',value_col='label')
+
+  path_list = list(dict_1.keys())
+  train,val = get_cross_validation_on_patient(path_list,6,1)
   
-  # Test sample - csv reader
-  file_path = '/staff/shijun/torch_projects/COVID-19_CLS/converter/shuffle_label.csv'
-  dict_ = csv_reader_single(file_path,key_col='id',value_col='label')
-  print(len(dict_.keys()))
-  # print(list(dict_.keys())[0:10])
-  
-  # file_path = '/staff/shijun/torch_projects/COVID-19_CLS/converter/complete_info.csv'
-  # dict_ = csv_reader_multi(file_path,key_col='patient_id',value_col=['Age','Sex'])
-  # print(list(dict_.keys())[0:10])
-  
-  txt_file = '/staff/shijun/torch_projects/COVID-19_CLS/converter/shuffle_label.txt'
-  target_dict = txt_reader_single(txt_file)
-  print(len(target_dict.keys()))

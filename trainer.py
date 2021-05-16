@@ -16,6 +16,8 @@ from data_utils.data_loader import DataGenerator
 
 import torch.distributed as dist
 from utils import remove_dir, make_dir
+from torch.cuda.amp import autocast as autocast
+from torch.cuda.amp import GradScaler
 # GPU version.
 
 class VolumeClassifier(object):
@@ -37,7 +39,7 @@ class VolumeClassifier(object):
   '''
     def __init__(self,net_name=None,lr=1e-3,n_epoch=1,channels=1,num_classes=3,input_shape=None,crop=48,
                   batch_size=6,num_workers=0,device=None,pre_trained=False,weight_path=None,weight_decay=0.,
-                  momentum=0.95,gamma=0.1,milestones=[40,80],T_max=5):
+                  momentum=0.95,gamma=0.1,milestones=[40,80],T_max=5,use_fp16=True):
         super(VolumeClassifier,self).__init__()
 
         self.net_name = net_name
@@ -65,6 +67,7 @@ class VolumeClassifier(object):
         self.gamma = gamma
         self.milestones = milestones
         self.T_max = T_max
+        self.use_fp16=use_fp16
 
         os.environ['CUDA_VISIBLE_DEVICES'] = self.device
 
@@ -132,9 +135,11 @@ class VolumeClassifier(object):
         # copy to gpu
         net = net.cuda()
         loss = loss.cuda()
-
+        
         # optimizer setting
         optimizer = self._get_optimizer(optimizer,net,lr)
+        scaler = GradScaler()
+
         if self.pre_trained:
             checkpoint = torch.load(self.weight_path)
             optimizer.load_state_dict(checkpoint['optimizer'])
@@ -145,7 +150,7 @@ class VolumeClassifier(object):
 
         # acc_threshold = 0.5
         for epoch in range(self.start_epoch,self.n_epoch):
-            train_loss,train_acc = self._train_on_epoch(epoch,net,loss,optimizer,train_loader)
+            train_loss,train_acc = self._train_on_epoch(epoch,net,loss,optimizer,train_loader,scaler)
 
             torch.cuda.empty_cache()
 
@@ -197,7 +202,7 @@ class VolumeClassifier(object):
         self.writer.close()
 
 
-    def _train_on_epoch(self,epoch,net,criterion,optimizer,train_loader):
+    def _train_on_epoch(self,epoch,net,criterion,optimizer,train_loader,scaler):
 
         net.train()
 
@@ -212,12 +217,18 @@ class VolumeClassifier(object):
             data = data.cuda()
             target = target.cuda()
 
-            output = net(data)
-            loss = criterion(output,target)
+            with autocast(self.use_fp16):
+                output = net(data)
+                loss = criterion(output,target)
 
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            if self.use_fp16:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
 
             output = F.softmax(output,dim=1)
             output = output.float()
@@ -273,8 +284,9 @@ class VolumeClassifier(object):
                 data = data.cuda()
                 target = target.cuda()
 
-                output = net(data)
-                loss = criterion(output,target)
+                with autocast(self.use_fp16):
+                    output = net(data)
+                    loss = criterion(output,target)
 
                 output = F.softmax(output,dim=1)
                 output = output.float()
@@ -345,8 +357,8 @@ class VolumeClassifier(object):
 
                 data = data.cuda()
                 target = target.cuda() #N
-
-                output = net(data)
+                with autocast(self.use_fp16):
+                    output = net(data)
                 output = F.softmax(output,dim=1)
                 output = output.float() #N*C
 

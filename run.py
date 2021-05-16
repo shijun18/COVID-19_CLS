@@ -10,6 +10,8 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
 import time
+import random
+from utils import exclude_path
 
 
 
@@ -18,34 +20,38 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold):
     print('total scans:%d'%len(path_list))
     patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
     patient_list = list(set(patient_list))
-    print('total patients:%d'%len(path_list))
+    print('total patients:%d'%len(patient_list))
+    patient_list.sort(reverse=True)  
 
     _len_ = len(patient_list) // fold_num
     train_id = []
     validation_id = []
+    
+
     end_index = current_fold * _len_
     start_index = end_index - _len_
-    if current_fold == fold_num:
-        validation_id.extend(patient_list[start_index:])
-        train_id.extend(patient_list[:start_index])
-    else:
-        validation_id.extend(patient_list[start_index:end_index])
-        train_id.extend(patient_list[:start_index])
-        train_id.extend(patient_list[end_index:])
+
+    validation_id.extend(patient_list[start_index:end_index])
+    train_id.extend(patient_list[:start_index])
+    train_id.extend(patient_list[end_index:_len_*(fold_num-1)])
 
     train_path = []
     validation_path = []
+    test_path = []
 
     for case in path_list:
         if os.path.basename(case).split('_')[0] in train_id:
             train_path.append(case)
-        else:
+        elif os.path.basename(case).split('_')[0] in validation_id:
             validation_path.append(case)
+        else:
+            test_path.append(case)
 
     random.shuffle(train_path)
     random.shuffle(validation_path)
     print("Train set length ", len(train_path),
-          "Val set length", len(validation_path))
+          "Val set length", len(validation_path),
+          'Test set len:',len(test_path))
 
     return train_path, validation_path
 
@@ -93,8 +99,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set data path & classifier
-    csv_path = './converter/shuffle_label.csv'
-    label_dict = csv_reader_single(csv_path, key_col='id', value_col='label')
+    ###### modification for new data
+    old_csv_path = './converter/shuffle_label.csv'
+    label_dict = csv_reader_single(old_csv_path, key_col='id', value_col='label')
+
+    # new_csv_path = './converter/new_shuffle_label.csv'
+    new_csv_path = './converter/new_resize_shuffle_label.csv'
+    total_label_dict = csv_reader_single(new_csv_path, key_col='id', value_col='label')
+
+    ######
 
     classifier = VolumeClassifier(**INIT_TRAINER)
     print(get_parameter_number(classifier.net))
@@ -102,13 +115,13 @@ if __name__ == "__main__":
     # Training
     ###############################################
     if args.mode == 'train-cross':
-        path_list = list(label_dict.keys())[:3600]
+        path_list = list(total_label_dict.keys())
         for i in range(5):
             print('===================fold %d==================='%(i+1))
-            train_path, val_path = get_cross_validation_on_patient(path_list, 5, i+1)
+            train_path, val_path = get_cross_validation_on_patient(path_list, 6, i+1)
             SETUP_TRAINER['train_path'] = train_path
             SETUP_TRAINER['val_path'] = val_path
-            SETUP_TRAINER['label_dict'] = label_dict
+            SETUP_TRAINER['label_dict'] = total_label_dict
             SETUP_TRAINER['cur_fold'] = i
 
             start_time = time.time()
@@ -117,11 +130,11 @@ if __name__ == "__main__":
             print('run time:%.4f' % (time.time() - start_time))
     
     elif args.mode == 'train':
-        path_list = list(label_dict.keys())[:3600]
-        train_path, val_path = get_cross_validation_on_patient(path_list, 5, CURRENT_FOLD+1)
+        path_list = list(total_label_dict.keys())
+        train_path, val_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
-        SETUP_TRAINER['label_dict'] = label_dict
+        SETUP_TRAINER['label_dict'] = total_label_dict
         SETUP_TRAINER['cur_fold'] = CURRENT_FOLD
 
         start_time = time.time()
@@ -133,16 +146,18 @@ if __name__ == "__main__":
     # Inference
     ###############################################
     elif args.mode == 'inf':
-        test_path = list(label_dict.keys())[3600:]
-        save_path = './analysis/result/{}-tmp.csv'.format(VERSION)
+        ex_path = exclude_path(old_csv_path,new_csv_path,'id')
+        test_path = list(label_dict.keys())[3600:] + ex_path
+        print('test len:',len(test_path))
+        save_path = './analysis/new_result/{}.csv'.format(VERSION)
 
         start_time = time.time()
         if args.save == 'no' or args.save == 'n':
-            result, _, _ = classifier.inference(test_path, label_dict)
+            result, _, _ = classifier.inference(test_path, total_label_dict)
             print('run time:%.4f' % (time.time() - start_time))
         else:
             result, feature_in, feature_out = classifier.inference(
-                test_path, label_dict, hook_fn_forward=True)
+                test_path, total_label_dict, hook_fn_forward=True)
             print('run time:%.4f' % (time.time() - start_time))
             # save the avgpool output
             print(feature_in.shape, feature_out.shape)
@@ -171,7 +186,7 @@ if __name__ == "__main__":
         cls_report['NCP']['specificity'] = (cm[0,0] + cm[0,2] + cm[2,0] + cm[2,2])/(np.sum(cm[0]) + np.sum(cm[2]))
         cls_report['Normal']['specificity'] = np.sum(cm[0:2,0:2])/np.sum(cm[:2])
         #save as csv
-        report_save_path = './analysis/result/{}_report-tmp.csv'.format(VERSION)
+        report_save_path = './analysis/new_result/{}_report.csv'.format(VERSION)
         report_csv_file = pd.DataFrame(cls_report)
         report_csv_file.to_csv(report_save_path)
     ###############################################

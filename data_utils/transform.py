@@ -24,11 +24,12 @@ class CropResize(object):
     # label: integer, 0,1,...
     image = sample['image']
     label = sample['label']
-    # crop
-    if self.crop is not None:
-      image = image[:,self.crop:-self.crop,self.crop:-self.crop]
+    
     # resize
     if self.dim is not None and image.shape != self.dim:
+      # crop
+      if self.crop is not None:
+          image = image[:,self.crop:-self.crop,self.crop:-self.crop]
       image = resize(image,self.dim,anti_aliasing=True)
 
     new_sample = {'image': image,

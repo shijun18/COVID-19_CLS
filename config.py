@@ -5,10 +5,10 @@ __all__ = ['r3d_18', 'se_r3d_18','da_18','da_se_18','mc3_18', 'r2plus1d_18','r3d
 from utils import get_weight_path
 
 NET_NAME = 'da_se_18'
-VERSION = 'v11.0'
+VERSION = 'v4'
 DEVICE = '3'
 # Must be True when pre-training and inference
-PRE_TRAINED = True 
+PRE_TRAINED = False 
 # 0,1,2,3,4
 CURRENT_FOLD = 0
 GPU_NUM = len(DEVICE.split(','))
@@ -31,6 +31,7 @@ WEIGHT_PATH_DICT = {
 WEIGHT_PATH = WEIGHT_PATH_DICT[NET_NAME]
 '''
 
+# CKPT_PATH = './new_ckpt/{}'.format(VERSION)
 CKPT_PATH = './new_ckpt/{}'.format(VERSION)
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
 print(WEIGHT_PATH)
@@ -44,8 +45,8 @@ INIT_TRAINER = {
   'channels':1,
   'num_classes':3,
   'input_shape':(64,224,224),
-  'crop':48,
-  'batch_size':6,
+  'crop':None,
+  'batch_size':12,
   'num_workers':2,
   'device':DEVICE,
   'pre_trained':PRE_TRAINED,
@@ -55,6 +56,7 @@ INIT_TRAINER = {
   'gamma': 0.1,
   'milestones': [40,80],
   'T_max':5,
+  'use_fp16':True
  }
 
 # Arguments when perform the trainer 
