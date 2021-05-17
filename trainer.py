@@ -157,7 +157,7 @@ class VolumeClassifier(object):
             val_loss,val_acc = self._val_on_epoch(epoch,net,loss,val_path,label_dict)
 
             if lr_scheduler is not None:
-                lr_scheduler.step(val_loss)
+                lr_scheduler.step()
 
 
             print('epoch:{},train_loss:{:.5f},val_loss:{:.5f}'
@@ -260,6 +260,8 @@ class VolumeClassifier(object):
 
         val_transformer = transforms.Compose([
           tr.CropResize(dim=self.input_shape,crop=self.crop),
+          tr.RandomTranslationRotationZoom(mode='trz'),
+          tr.RandomFlip(mode='hv'),
           tr.To_Tensor(n_class=self.num_classes)
         ])
 

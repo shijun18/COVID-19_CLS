@@ -15,13 +15,13 @@ from utils import exclude_path
 
 
 
-def get_cross_validation_on_patient(path_list, fold_num, current_fold):
+def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dict):
 
     print('total scans:%d'%len(path_list))
-    patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
-    patient_list = list(set(patient_list))
+    tmp_patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
+    patient_list = list(set(tmp_patient_list))
     print('total patients:%d'%len(patient_list))
-    patient_list.sort(reverse=True)  
+    patient_list.sort(key=tmp_patient_list.index,reverse=True)  
 
     _len_ = len(patient_list) // fold_num
     train_id = []
@@ -49,9 +49,22 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold):
 
     random.shuffle(train_path)
     random.shuffle(validation_path)
-    print("Train set length ", len(train_path),
-          "Val set length", len(validation_path),
-          'Test set len:',len(test_path))
+    print("Train set length: ", len(train_path),
+          "\nVal set length:", len(validation_path),
+          '\nTest set len:',len(test_path))
+    
+    train_label = [label_dict[case] for case in train_path]
+    print('train CP:',train_label.count(0))
+    print('train NCP:',train_label.count(1))
+    print('train Normal:',train_label.count(2))
+    val_label = [label_dict[case] for case in validation_path]
+    print('val CP:',val_label.count(0))
+    print('val NCP:',val_label.count(1))
+    print('val Normal:',val_label.count(2))
+    test_label = [label_dict[case] for case in test_path]
+    print('test CP:',test_label.count(0))
+    print('test NCP:',test_label.count(1))
+    print('test Normal:',test_label.count(2))
 
     return train_path, validation_path
 
@@ -103,6 +116,7 @@ if __name__ == "__main__":
     old_csv_path = './converter/shuffle_label.csv'
     label_dict = csv_reader_single(old_csv_path, key_col='id', value_col='label')
 
+    # new_csv_path = './converter/shuffle_label.csv'
     # new_csv_path = './converter/new_shuffle_label.csv'
     new_csv_path = './converter/new_resize_shuffle_label.csv'
     total_label_dict = csv_reader_single(new_csv_path, key_col='id', value_col='label')
@@ -118,7 +132,8 @@ if __name__ == "__main__":
         path_list = list(total_label_dict.keys())
         for i in range(5):
             print('===================fold %d==================='%(i+1))
-            train_path, val_path = get_cross_validation_on_patient(path_list, 6, i+1)
+            train_path, val_path = get_cross_validation_on_patient(path_list, 6, i+1, total_label_dict)
+            # train_path, val_path = get_cross_validation(path_list, 6, i+1)
             SETUP_TRAINER['train_path'] = train_path
             SETUP_TRAINER['val_path'] = val_path
             SETUP_TRAINER['label_dict'] = total_label_dict
@@ -131,7 +146,7 @@ if __name__ == "__main__":
     
     elif args.mode == 'train':
         path_list = list(total_label_dict.keys())
-        train_path, val_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1)
+        train_path, val_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['label_dict'] = total_label_dict

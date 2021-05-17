@@ -4,9 +4,9 @@ __all__ = ['r3d_18', 'se_r3d_18','da_18','da_se_18','mc3_18', 'r2plus1d_18','r3d
 
 from utils import get_weight_path
 
-NET_NAME = 'da_se_18'
-VERSION = 'v4'
-DEVICE = '3'
+NET_NAME = 'r3d_18'
+VERSION = 'v1'
+DEVICE = '0'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 # 0,1,2,3,4
@@ -22,15 +22,15 @@ GPU_NUM = len(DEVICE.split(','))
 # }
 '''
 WEIGHT_PATH_DICT = {
-  'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format(VERSION),
-  'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:15-train_loss:0.27431-val_loss:0.19606.pth'.format(VERSION),
-  'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.32471-val_loss:0.25842.pth'.format(VERSION),
-  'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format(VERSION),
+  'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format('v1.4'),
+  'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:15-train_loss:0.27431-val_loss:0.19606.pth'.format('v4.4'),
+  'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.32471-val_loss:0.25842.pth'.format('v10.4'),
+  'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format('v11.0'),
 }
 
 WEIGHT_PATH = WEIGHT_PATH_DICT[NET_NAME]
+print(WEIGHT_PATH)
 '''
-
 # CKPT_PATH = './new_ckpt/{}'.format(VERSION)
 CKPT_PATH = './new_ckpt/{}'.format(VERSION)
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
@@ -46,7 +46,7 @@ INIT_TRAINER = {
   'num_classes':3,
   'input_shape':(64,224,224),
   'crop':None,
-  'batch_size':12,
+  'batch_size':6,
   'num_workers':2,
   'device':DEVICE,
   'pre_trained':PRE_TRAINED,
@@ -56,7 +56,7 @@ INIT_TRAINER = {
   'gamma': 0.1,
   'milestones': [40,80],
   'T_max':5,
-  'use_fp16':True
+  'use_fp16':False
  }
 
 # Arguments when perform the trainer 
