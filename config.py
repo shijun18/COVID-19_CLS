@@ -4,9 +4,9 @@ __all__ = ['r3d_18', 'se_r3d_18','da_18','da_se_18','mc3_18', 'r2plus1d_18','r3d
 
 from utils import get_weight_path
 
-NET_NAME = 'r3d_18'
-VERSION = 'v1'
-DEVICE = '0'
+NET_NAME = 'da_18'
+VERSION = 'v3'
+DEVICE = '2'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 # 0,1,2,3,4

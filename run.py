@@ -66,7 +66,7 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dic
     print('test NCP:',test_label.count(1))
     print('test Normal:',test_label.count(2))
 
-    return train_path, validation_path
+    return train_path, validation_path,test_path
 
 
 def get_cross_validation(path_list, fold_num, current_fold):
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         path_list = list(total_label_dict.keys())
         for i in range(5):
             print('===================fold %d==================='%(i+1))
-            train_path, val_path = get_cross_validation_on_patient(path_list, 6, i+1, total_label_dict)
+            train_path, val_path,_ = get_cross_validation_on_patient(path_list, 6, i+1, total_label_dict)
             # train_path, val_path = get_cross_validation(path_list, 6, i+1)
             SETUP_TRAINER['train_path'] = train_path
             SETUP_TRAINER['val_path'] = val_path
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     
     elif args.mode == 'train':
         path_list = list(total_label_dict.keys())
-        train_path, val_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
+        train_path, val_path, _ = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['label_dict'] = total_label_dict
@@ -161,11 +161,12 @@ if __name__ == "__main__":
     # Inference
     ###############################################
     elif args.mode == 'inf':
-        ex_path = exclude_path(old_csv_path,new_csv_path,'id')
-        test_path = list(label_dict.keys())[3600:] + ex_path
+        # ex_path = exclude_path(old_csv_path,new_csv_path,'id')
+        # test_path = list(label_dict.keys())[3600:] + ex_path
+        path_list = list(total_label_dict.keys())
+        _, _, test_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
         print('test len:',len(test_path))
         save_path = './analysis/new_result/{}.csv'.format(VERSION)
-
         start_time = time.time()
         if args.save == 'no' or args.save == 'n':
             result, _, _ = classifier.inference(test_path, total_label_dict)

@@ -64,7 +64,7 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold,label_dict
     tmp_patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
     patient_list = list(set(tmp_patient_list))
     print('total patients:%d'%len(patient_list))
-    patient_list.sort(reverse=True)  
+    patient_list.sort(key=tmp_patient_list.index,reverse=True)  
 
     _len_ = len(patient_list) // fold_num
     train_id = []
@@ -123,5 +123,5 @@ if __name__ == "__main__":
   print(list(dict_1.keys())[:10] == tmp)
 
   path_list = list(dict_1.keys())
-  train,val = get_cross_validation_on_patient(path_list,6,1,label_dict=dict_1)
+  train,val = get_cross_validation_on_patient(path_list,6,5,label_dict=dict_1)
   
