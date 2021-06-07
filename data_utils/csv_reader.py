@@ -57,9 +57,9 @@ def txt_reader_single(txt_file):
 
   return target_dict  
 
-
-def get_cross_validation_on_patient(path_list, fold_num, current_fold,label_dict=None):
+def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dict):
     import os,random
+
     print('total scans:%d'%len(path_list))
     tmp_patient_list = [os.path.basename(case).split('_')[0] for case in path_list]
     patient_list = list(set(tmp_patient_list))
@@ -92,11 +92,10 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold,label_dict
 
     random.shuffle(train_path)
     random.shuffle(validation_path)
-    print("Train set length ", len(train_path),
-          "Val set length", len(validation_path),
-          'Test set len:',len(test_path))
-
-    # debug
+    print("Train set length:", len(train_path),
+          "\nVal set length:", len(validation_path),
+          '\nTest set length:',len(test_path))
+    
     train_label = [label_dict[case] for case in train_path]
     print('train CP:',train_label.count(0))
     print('train NCP:',train_label.count(1))
@@ -110,18 +109,14 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold,label_dict
     print('test NCP:',test_label.count(1))
     print('test Normal:',test_label.count(2))
 
+    return train_path, validation_path,test_path
 
-    return train_path, validation_path
 
 if __name__ == "__main__":
   
-  tmp = ['/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/Normal/1965_420.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/CP/614_2976.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/CP/1582_4270.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/CP/1364_3776.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/Normal/1764_1144.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/NCP/943_2486.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/CP/1434_3937.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/NCP/260_1666.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/Normal/1727_1010.hdf5', '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/Normal/2262_717.hdf5']
-
   file_path = '/staff/shijun/torch_projects/COVID-19_CLS/converter/new_resize_shuffle_label.csv'
-  dict_1 = csv_reader_single(file_path,key_col='id',value_col='label')
-  print(list(dict_1.keys())[:10])
-  print(list(dict_1.keys())[:10] == tmp)
+  label_dict = csv_reader_single(file_path,key_col='id',value_col='label')
 
-  path_list = list(dict_1.keys())
-  train,val = get_cross_validation_on_patient(path_list,6,5,label_dict=dict_1)
+  path_list = list(label_dict.keys())
+  train,val,_ = get_cross_validation_on_patient(path_list,6,5,label_dict=label_dict)
   

@@ -49,9 +49,9 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dic
 
     random.shuffle(train_path)
     random.shuffle(validation_path)
-    print("Train set length: ", len(train_path),
+    print("Train set length:", len(train_path),
           "\nVal set length:", len(validation_path),
-          '\nTest set len:',len(test_path))
+          '\nTest set length:',len(test_path))
     
     train_label = [label_dict[case] for case in train_path]
     print('train CP:',train_label.count(0))
@@ -166,7 +166,7 @@ if __name__ == "__main__":
         path_list = list(total_label_dict.keys())
         _, _, test_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
         print('test len:',len(test_path))
-        save_path = './analysis/new_result/{}.csv'.format(VERSION)
+        save_path = './analysis/final_result/{}.csv'.format(VERSION)
         start_time = time.time()
         if args.save == 'no' or args.save == 'n':
             result, _, _ = classifier.inference(test_path, total_label_dict)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             print('run time:%.4f' % (time.time() - start_time))
             # save the avgpool output
             print(feature_in.shape, feature_out.shape)
-            feature_dir = './analysis/mid_feature/{}'.format(VERSION)
+            feature_dir = './analysis/final_mid_feature/{}'.format(VERSION)
             if not os.path.exists(feature_dir):
                 os.makedirs(feature_dir)
             from converter.common_utils import save_as_hdf5
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         cls_report['NCP']['specificity'] = (cm[0,0] + cm[0,2] + cm[2,0] + cm[2,2])/(np.sum(cm[0]) + np.sum(cm[2]))
         cls_report['Normal']['specificity'] = np.sum(cm[0:2,0:2])/np.sum(cm[:2])
         #save as csv
-        report_save_path = './analysis/new_result/{}_report.csv'.format(VERSION)
+        report_save_path = './analysis/final_result/{}_report.csv'.format(VERSION)
         report_csv_file = pd.DataFrame(cls_report)
         report_csv_file.to_csv(report_save_path)
     ###############################################
