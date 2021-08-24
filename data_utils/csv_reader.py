@@ -114,7 +114,7 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dic
 
 if __name__ == "__main__":
   
-  file_path = '/staff/shijun/torch_projects/COVID-19_CLS/converter/new_resize_shuffle_label.csv'
+  file_path = '/staff/shijun/torch_projects/COVID-19_CLS/converter/csv_file/new_resize_shuffle_label.csv'
   label_dict = csv_reader_single(file_path,key_col='id',value_col='label')
 
   path_list = list(label_dict.keys())

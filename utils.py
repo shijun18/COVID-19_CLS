@@ -77,7 +77,7 @@ def dfs_remove_weight(ckpt_path,retain=5):
 
 
 if __name__ == '__main__':
-    # ex_path = exclude_path('./converter/shuffle_label.csv', './converter/new_shuffle_label.csv','id')
+    # ex_path = exclude_path('./converter/csv_file/shuffle_label.csv', './converter/csv_file/new_shuffle_label.csv','id')
     ckpt_path = './new_ckpt/'
     dfs_remove_weight(ckpt_path)
     

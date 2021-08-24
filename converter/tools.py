@@ -2,7 +2,7 @@ import os
 import pandas as pd 
 
 
-csv_path = './unzip_filenames.csv'
+csv_path = './csv_file/unzip_filenames.csv'
 
 csv_file = pd.read_csv(csv_path)
 
@@ -33,7 +33,7 @@ for case in os.scandir(npy_path):
                 
 '''
 
-old_label_csv = './slice_number.csv'
+old_label_csv = './csv_file/slice_number.csv'
 new_label_csv = []
 csv_file = pd.read_csv(old_label_csv)
 

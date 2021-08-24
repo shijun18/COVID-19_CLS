@@ -113,10 +113,10 @@ if __name__ == "__main__":
 
     # Set data path & classifier
     ###### modification for new data
-    old_csv_path = './converter/shuffle_label.csv'
+    old_csv_path = './converter/csv_file/shuffle_label.csv'
     label_dict = csv_reader_single(old_csv_path, key_col='id', value_col='label')
 
-    new_csv_path = './converter/new_resize_shuffle_label.csv'
+    new_csv_path = './converter/csv_file/new_resize_shuffle_label.csv'
     total_label_dict = csv_reader_single(new_csv_path, key_col='id', value_col='label')
 
     ######

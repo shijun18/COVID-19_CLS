@@ -59,5 +59,5 @@ if __name__ == "__main__":
     input_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/npy_data'
     save_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data'
     resize_data(input_path,save_path)
-    csv_path = './new_resize_shuffle_label.csv'
+    csv_path = './csv_file/new_resize_shuffle_label.csv'
     make_label_csv(save_path,csv_path)

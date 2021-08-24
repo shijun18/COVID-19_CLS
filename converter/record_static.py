@@ -66,17 +66,17 @@ if __name__ == "__main__":
   
   # Part-1: make label csv file
   input_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/resize_data/'
-  csv_path = './new_resize_shuffle_label.csv'
+  csv_path = './csv_file/new_resize_shuffle_label.csv'
   make_label_csv(input_path,csv_path)
   
   '''
   # Part-2: Count the slice number
   input_path = '/staff/shijun/torch_projects/COVID-19_CLS/dataset/npy_data/'
-  csv_path = './new_slice_number.csv'
+  csv_path = './csv_file/new_slice_number.csv'
   statistic_slice_num(input_path,csv_path)
   '''
   '''
-  csv_path = './shuffle_label.csv'
+  csv_path = './csv_file/shuffle_label.csv'
   print(csv_path)
   path_list = pd.read_csv(csv_path)['id'].values.tolist()[:3600]
   slice_num = count_set(path_list)
