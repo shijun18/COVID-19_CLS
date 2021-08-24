@@ -7,3 +7,4 @@ ckpt/
 __pycache__/
 mid_feature/
 *.ipynb
+*.csv

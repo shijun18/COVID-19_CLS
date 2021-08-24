@@ -130,6 +130,24 @@ def se_r3d_18(pretrained=False, progress=True, **kwargs):
                          stem=BasicStem, **kwargs)
 
 
+def se_r3d_34(pretrained=False, progress=True, **kwargs):
+    """Construct 18 layer Resnet3D model as in
+    https://github.com/moskomule/senet.pytorch/blob/master/senet/se_resnet.py
+
+    Args:
+        pretrained (bool): If True, returns a model pre-trained
+        progress (bool): If True, displays a progress bar of the download to stderr
+
+    Returns:
+        nn.Module: SE_R3D-18 network
+    """
+
+    return _volume_resnet('se_r3d_34',
+                         pretrained, progress,
+                         block=SEBasicBlock,
+                         conv_makers=[Conv3DSimple] * 4,
+                         layers=[3, 4, 6, 3],
+                         stem=BasicStem, **kwargs)
 
 def se_mc3_18(pretrained=False, progress=True, **kwargs):
     """Construct 18 layer Resnet3D model as in

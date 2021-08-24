@@ -4,7 +4,7 @@ import argparse
 from trainer import VolumeClassifier
 import pandas as pd
 from data_utils.csv_reader import csv_reader_single
-from config import INIT_TRAINER, SETUP_TRAINER, VERSION, CURRENT_FOLD
+from config import INIT_TRAINER, SETUP_TRAINER, VERSION, CURRENT_FOLD, WEIGHT_PATH_LIST,FOLD_NUM
 
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument('-m',
                         '--mode',
                         default='train',
-                        choices=["train-cross","train", "inf"],
+                        choices=["train-cross","train", "inf","inf-cross"],
                         help='choose the mode',
                         type=str)
     parser.add_argument('-s',
@@ -116,28 +116,29 @@ if __name__ == "__main__":
     old_csv_path = './converter/shuffle_label.csv'
     label_dict = csv_reader_single(old_csv_path, key_col='id', value_col='label')
 
-    # new_csv_path = './converter/shuffle_label.csv'
-    # new_csv_path = './converter/new_shuffle_label.csv'
     new_csv_path = './converter/new_resize_shuffle_label.csv'
     total_label_dict = csv_reader_single(new_csv_path, key_col='id', value_col='label')
 
     ######
-
-    classifier = VolumeClassifier(**INIT_TRAINER)
-    print(get_parameter_number(classifier.net))
+    if args.mode != 'train-cross' and args.mode != 'inf-cross':
+        classifier = VolumeClassifier(**INIT_TRAINER)
+        print(get_parameter_number(classifier.net))
 
     # Training
     ###############################################
     if args.mode == 'train-cross':
         path_list = list(total_label_dict.keys())
-        for i in range(5):
-            print('===================fold %d==================='%(i+1))
-            train_path, val_path,_ = get_cross_validation_on_patient(path_list, 6, i+1, total_label_dict)
+        for fold in range(1,FOLD_NUM+1):
+            print('===================fold %d==================='%(fold))
+            if INIT_TRAINER['pre_trained']:
+                INIT_TRAINER['weight_path'] = WEIGHT_PATH_LIST[fold-1]
+            classifier = VolumeClassifier(**INIT_TRAINER)
+            train_path, val_path,_ = get_cross_validation_on_patient(path_list, FOLD_NUM+1, fold, total_label_dict)
             # train_path, val_path = get_cross_validation(path_list, 6, i+1)
             SETUP_TRAINER['train_path'] = train_path
             SETUP_TRAINER['val_path'] = val_path
             SETUP_TRAINER['label_dict'] = total_label_dict
-            SETUP_TRAINER['cur_fold'] = i
+            SETUP_TRAINER['cur_fold'] = fold
 
             start_time = time.time()
             classifier.trainer(**SETUP_TRAINER)
@@ -146,7 +147,7 @@ if __name__ == "__main__":
     
     elif args.mode == 'train':
         path_list = list(total_label_dict.keys())
-        train_path, val_path, _ = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
+        train_path, val_path, _ = get_cross_validation_on_patient(path_list, FOLD_NUM+1, CURRENT_FOLD, total_label_dict)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['label_dict'] = total_label_dict
@@ -160,49 +161,110 @@ if __name__ == "__main__":
 
     # Inference
     ###############################################
-    elif args.mode == 'inf':
-        # ex_path = exclude_path(old_csv_path,new_csv_path,'id')
-        # test_path = list(label_dict.keys())[3600:] + ex_path
-        path_list = list(total_label_dict.keys())
-        _, _, test_path = get_cross_validation_on_patient(path_list, 6, CURRENT_FOLD+1,total_label_dict)
-        print('test len:',len(test_path))
-        save_path = './analysis/final_result/{}.csv'.format(VERSION)
-        start_time = time.time()
-        if args.save == 'no' or args.save == 'n':
-            result, _, _ = classifier.inference(test_path, total_label_dict)
-            print('run time:%.4f' % (time.time() - start_time))
-        else:
-            result, feature_in, feature_out = classifier.inference(
-                test_path, total_label_dict, hook_fn_forward=True)
-            print('run time:%.4f' % (time.time() - start_time))
-            # save the avgpool output
-            print(feature_in.shape, feature_out.shape)
-            feature_dir = './analysis/final_mid_feature/{}'.format(VERSION)
-            if not os.path.exists(feature_dir):
-                os.makedirs(feature_dir)
-            from converter.common_utils import save_as_hdf5
-            for i in range(len(test_path)):
-                name = os.path.basename(test_path[i])
-                feature_path = os.path.join(feature_dir, name)
-                save_as_hdf5(feature_in[i], feature_path, 'feature_in')
-                save_as_hdf5(feature_out[i], feature_path, 'feature_out')
-        result['path'] = test_path
-        csv_file = pd.DataFrame(result)
-        csv_file.to_csv(save_path, index=False)
-        #report
-        cls_report = classification_report(
-            result['true'],
-            result['pred'],
-            target_names=['CP', 'NCP', 'Normal'],
-            output_dict=True)
-        print(cls_report)
-        cm = confusion_matrix(result['true'], result['pred'])
-        print(cm)
-        cls_report['CP']['specificity'] = np.sum(cm[1:,1:])/np.sum(cm[1:])
-        cls_report['NCP']['specificity'] = (cm[0,0] + cm[0,2] + cm[2,0] + cm[2,2])/(np.sum(cm[0]) + np.sum(cm[2]))
-        cls_report['Normal']['specificity'] = np.sum(cm[0:2,0:2])/np.sum(cm[:2])
-        #save as csv
-        report_save_path = './analysis/final_result/{}_report.csv'.format(VERSION)
-        report_csv_file = pd.DataFrame(cls_report)
-        report_csv_file.to_csv(report_save_path)
+    elif 'inf' in args.mode:
+        # save_dir = './analysis/tmp_result/{}'.format(VERSION)
+        # feature_dir = './analysis/tmp_mid_feature/{}'.format(VERSION)
+        save_dir = './analysis/new_result/{}'.format(VERSION)
+        feature_dir = './analysis/new_mid_feature/{}'.format(VERSION)
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        if args.mode == 'inf':
+            # ex_path = exclude_path(old_csv_path,new_csv_path,'id')
+            # test_path = list(label_dict.keys())[3600:] + ex_path
+            
+            path_list = list(total_label_dict.keys())
+            _, _, test_path = get_cross_validation_on_patient(path_list, FOLD_NUM+1, CURRENT_FOLD,total_label_dict)
+            print('test len:',len(test_path))
+            save_path = os.path.join(save_dir,f'fold{str(CURRENT_FOLD)}.csv')
+            start_time = time.time()
+            if args.save == 'no' or args.save == 'n':
+                result, _, _ = classifier.inference(test_path, total_label_dict)
+                print('run time:%.4f' % (time.time() - start_time))
+            else:
+                result, feature_in, feature_out = classifier.inference(
+                    test_path, total_label_dict, hook_fn_forward=True)
+                print('run time:%.4f' % (time.time() - start_time))
+                # save the avgpool output
+                print(feature_in.shape, feature_out.shape)
+                feature_save_path = os.path.join(feature_dir,f'fold{str(CURRENT_FOLD)}')
+                if not os.path.exists(feature_save_path):
+                    os.makedirs(feature_save_path)
+                from converter.common_utils import save_as_hdf5
+                for i in range(len(test_path)):
+                    name = os.path.basename(test_path[i])
+                    feature_path = os.path.join(feature_save_path, name)
+                    save_as_hdf5(feature_in[i], feature_path, 'feature_in')
+                    save_as_hdf5(feature_out[i], feature_path, 'feature_out')
+            result['path'] = test_path
+            csv_file = pd.DataFrame(result)
+            csv_file.to_csv(save_path, index=False)
+            #report
+            cls_report = classification_report(
+                result['true'],
+                result['pred'],
+                target_names=['CP', 'NCP', 'Normal'],
+                output_dict=True)
+            print(cls_report)
+            cm = confusion_matrix(result['true'], result['pred'])
+            print(cm)
+            cls_report['CP']['specificity'] = np.sum(cm[1:,1:])/np.sum(cm[1:])
+            cls_report['NCP']['specificity'] = (cm[0,0] + cm[0,2] + cm[2,0] + cm[2,2])/(np.sum(cm[0]) + np.sum(cm[2]))
+            cls_report['Normal']['specificity'] = np.sum(cm[0:2,0:2])/np.sum(cm[:2])
+            #save as csv
+            report_save_path = os.path.join(save_dir,f'fold{str(CURRENT_FOLD)}_report.csv')
+            report_csv_file = pd.DataFrame(cls_report)
+            report_csv_file.to_csv(report_save_path)
+        
+
+        elif args.mode == 'inf-cross':
+            # ex_path = exclude_path(old_csv_path,new_csv_path,'id')
+            # test_path = list(label_dict.keys())[3600:] + ex_path
+            path_list = list(total_label_dict.keys())
+
+            for fold in range(1,FOLD_NUM+1):
+                print('===================fold %d==================='%(fold))
+                print('weight path %s'%WEIGHT_PATH_LIST[fold-1])
+                INIT_TRAINER['weight_path'] = WEIGHT_PATH_LIST[fold-1]
+                classifier = VolumeClassifier(**INIT_TRAINER)
+                _, _, test_path = get_cross_validation_on_patient(path_list, FOLD_NUM+1, fold, total_label_dict)
+                print('test len:',len(test_path))
+                save_path = os.path.join(save_dir,f'fold{str(fold)}.csv')
+                start_time = time.time()
+                if args.save == 'no' or args.save == 'n':
+                    result, _, _ = classifier.inference(test_path, total_label_dict)
+                    print('run time:%.4f' % (time.time() - start_time))
+                else:
+                    result, feature_in, feature_out = classifier.inference(
+                        test_path, total_label_dict, hook_fn_forward=True)
+                    print('run time:%.4f' % (time.time() - start_time))
+                    # save the avgpool output
+                    print(feature_in.shape, feature_out.shape)
+                    feature_save_path = os.path.join(feature_dir,f'fold{str(fold)}')
+                    if not os.path.exists(feature_save_path):
+                        os.makedirs(feature_save_path)
+                    from converter.common_utils import save_as_hdf5
+                    for i in range(len(test_path)):
+                        name = os.path.basename(test_path[i])
+                        feature_path = os.path.join(feature_save_path, name)
+                        save_as_hdf5(feature_in[i], feature_path, 'feature_in')
+                        save_as_hdf5(feature_out[i], feature_path, 'feature_out')
+                result['path'] = test_path
+                csv_file = pd.DataFrame(result)
+                csv_file.to_csv(save_path, index=False)
+                #report
+                cls_report = classification_report(
+                    result['true'],
+                    result['pred'],
+                    target_names=['CP', 'NCP', 'Normal'],
+                    output_dict=True)
+                print(cls_report)
+                cm = confusion_matrix(result['true'], result['pred'])
+                print(cm)
+                cls_report['CP']['specificity'] = np.sum(cm[1:,1:])/np.sum(cm[1:])
+                cls_report['NCP']['specificity'] = (cm[0,0] + cm[0,2] + cm[2,0] + cm[2,2])/(np.sum(cm[0]) + np.sum(cm[2]))
+                cls_report['Normal']['specificity'] = np.sum(cm[0:2,0:2])/np.sum(cm[:2])
+                #save as csv
+                report_save_path = os.path.join(save_dir,f'fold{str(fold)}_report.csv')
+                report_csv_file = pd.DataFrame(cls_report)
+                report_csv_file.to_csv(report_save_path)
     ###############################################

@@ -361,6 +361,16 @@ def da_18(pretrained=False, progress=True, **kwargs):
                          stem=BasicStem, **kwargs)
 
 
+def da_34(pretrained=False, progress=True, **kwargs):
+
+    return _volume_resnet('da_34',
+                         pretrained, progress,
+                         block=DABasicBlock,
+                         conv_makers=[Conv3DSimple] * 4,
+                         layers=[3, 4, 6, 3],
+                         depths=[64,32,16,8],
+                         stem=BasicStem, **kwargs)
+
 def da_se_18(pretrained=False, progress=True, **kwargs):
 
     return _volume_resnet('da_se_18',
@@ -371,6 +381,16 @@ def da_se_18(pretrained=False, progress=True, **kwargs):
                          depths=[64,32,16,8],
                          stem=BasicStem, **kwargs)
 
+
+def da_se_34(pretrained=False, progress=True, **kwargs):
+
+    return _volume_resnet('da_se_34',
+                         pretrained, progress,
+                         block=DASEBasicBlock,
+                         conv_makers=[Conv3DSimple] * 4,
+                         layers=[3, 4, 6, 3],
+                         depths=[64,32,16,8],
+                         stem=BasicStem, **kwargs)
 
 def da_mc3_18(pretrained=False, progress=True, **kwargs):
 

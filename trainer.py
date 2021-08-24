@@ -15,7 +15,7 @@ import data_utils.transform as tr
 from data_utils.data_loader import DataGenerator
 
 import torch.distributed as dist
-from utils import remove_dir, make_dir
+from utils import dfs_remove_weight
 from torch.cuda.amp import autocast as autocast
 from torch.cuda.amp import GradScaler
 # GPU version.
@@ -52,12 +52,13 @@ class VolumeClassifier(object):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.device = device
-        self.net = self._get_net(self.net_name)
+        
         self.pre_trained = pre_trained
         self.weight_path = weight_path
         self.start_epoch = 0
         self.global_step = 0
         self.loss_threshold = 1.0
+        self.metric_threshold = 0.0
         # save the middle output
         self.feature_in = []
         self.feature_out = []
@@ -70,6 +71,8 @@ class VolumeClassifier(object):
         self.use_fp16=use_fp16
 
         os.environ['CUDA_VISIBLE_DEVICES'] = self.device
+
+        self.net = self._get_net(self.net_name)
 
         if self.pre_trained:
             self._get_pre_trained(self.weight_path)
@@ -87,8 +90,9 @@ class VolumeClassifier(object):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
-        log_dir = '%s.%d'%(log_dir,cur_fold)
-        output_dir = '%s.%d'%(output_dir,cur_fold)
+
+        log_dir = os.path.join(log_dir,f'fold{str(cur_fold)}')
+        output_dir = os.path.join(output_dir,f'fold{str(cur_fold)}')
         
         if os.path.exists(log_dir):
             if not self.pre_trained:
@@ -148,7 +152,7 @@ class VolumeClassifier(object):
             lr_scheduler = self._get_lr_scheduler(lr_scheduler,optimizer)
 
 
-        # acc_threshold = 0.5
+        early_stopping = EarlyStopping(patience=50,verbose=True,monitor='val_acc',best_score=self.metric_threshold,op_type='max')
         for epoch in range(self.start_epoch,self.n_epoch):
             train_loss,train_acc = self._train_on_epoch(epoch,net,loss,optimizer,train_loader,scaler)
 
@@ -177,8 +181,10 @@ class VolumeClassifier(object):
               'data/lr',optimizer.param_groups[0]['lr'],epoch
             )
 
-            if val_loss < self.loss_threshold:
-                self.loss_threshold = val_loss
+            # if val_loss < self.loss_threshold:
+            #     self.loss_threshold = val_loss
+            if val_acc > self.metric_threshold:
+                self.metric_threshold = val_acc
 
                 if len(self.device.split(',')) > 1:
                     state_dict = net.module.state_dict()
@@ -200,6 +206,7 @@ class VolumeClassifier(object):
 
 
         self.writer.close()
+        dfs_remove_weight(output_dir,5)
 
 
     def _train_on_epoch(self,epoch,net,criterion,optimizer,train_loader,scaler):
@@ -331,6 +338,8 @@ class VolumeClassifier(object):
 
         test_transformer = transforms.Compose([
           tr.CropResize(dim=self.input_shape,crop=self.crop),
+        #   tr.RandomTranslationRotationZoom(mode='trz'),
+        #   tr.RandomFlip(mode='hv'),
           tr.To_Tensor(n_class=self.num_classes)
         ])
 
@@ -387,26 +396,34 @@ class VolumeClassifier(object):
             from model.resnet_3d import r3d_18
             net = r3d_18(input_channels=self.channels,num_classes=self.num_classes)
 
-        elif net_name == 'r3d_conv_18':
-            from model.resnet_conv_3d import r3d_conv_18
-            net = r3d_conv_18(input_channels=self.channels,num_classes=self.num_classes)
-
-        elif net_name == 'mc3_18':
-            from model.resnet_3d import mc3_18
-            net = mc3_18(input_channels=self.channels,num_classes=self.num_classes)
-
-        elif net_name == 'r2plus1d_18':
-            from model.resnet_3d import r2plus1d_18
-            net = r2plus1d_18(input_channels=self.channels,num_classes=self.num_classes)
-
         elif net_name == 'se_r3d_18':
             from model.se_resnet_3d import se_r3d_18
             net = se_r3d_18(input_channels=self.channels,num_classes=self.num_classes)
 
-        elif net_name == 'se_mc3_18':
-            from model.se_resnet_3d import se_mc3_18
-            net = se_mc3_18(input_channels=self.channels,num_classes=self.num_classes)
+        elif net_name == 'da_18':
+            from model.da_resnet_3d import da_18
+            net = da_18(input_channels=self.channels,num_classes=self.num_classes)
 
+        elif net_name == 'da_se_18':
+            from model.da_resnet_3d import da_se_18
+            net = da_se_18(input_channels=self.channels,num_classes=self.num_classes)
+        
+        elif net_name == 'r3d_34':
+            from model.resnet_3d import r3d_34
+            net = r3d_34(input_channels=self.channels,num_classes=self.num_classes)
+
+        elif net_name == 'se_r3d_34':
+            from model.se_resnet_3d import se_r3d_34
+            net = se_r3d_34(input_channels=self.channels,num_classes=self.num_classes)
+
+        elif net_name == 'da_34':
+            from model.da_resnet_3d import da_34
+            net = da_34(input_channels=self.channels,num_classes=self.num_classes)
+
+        elif net_name == 'da_se_34':
+            from model.da_resnet_3d import da_se_34
+            net = da_se_34(input_channels=self.channels,num_classes=self.num_classes)
+        
         elif net_name == 'vgg16_3d':
             from model.vgg_3d import vgg16_3d
             net = vgg16_3d(input_channels=self.channels,num_classes=self.num_classes)
@@ -414,22 +431,6 @@ class VolumeClassifier(object):
         elif net_name == 'vgg19_3d':
             from model.vgg_3d import vgg19_3d
             net = vgg19_3d(input_channels=self.channels,num_classes=self.num_classes)
-
-        elif net_name == 'da_18':
-            from model.da_resnet_3d import da_18
-            net = da_18(input_channels=self.channels,num_classes=self.num_classes)
-
-        elif net_name == 'da_mc3_18':
-            from model.da_resnet_3d import da_mc3_18
-            net = da_mc3_18(input_channels=self.channels,num_classes=self.num_classes)
-
-        elif net_name == 'da_se_mc3_18':
-            from model.da_resnet_3d import da_se_mc3_18
-            net = da_se_mc3_18(input_channels=self.channels,num_classes=self.num_classes)
-
-        elif net_name == 'da_se_18':
-            from model.da_resnet_3d import da_se_18
-            net = da_se_18(input_channels=self.channels,num_classes=self.num_classes)
 
         return net
 
@@ -514,3 +515,57 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(1/batch_size))
     return res
+
+
+
+class EarlyStopping(object):
+    """Early stops the training if performance doesn't improve after a given patience."""
+    def __init__(self, patience=10, verbose=True, delta=0, monitor='val_loss',best_score=None,op_type='min'):
+        """
+        Args:
+            patience (int): How long to wait after last time performance improved.
+                            Default: 10
+            verbose (bool): If True, prints a message for each performance improvement. 
+                            Default: True
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+            monitor (str): Monitored variable.
+                            Default: 'val_loss'
+            op_type (str): 'min' or 'max'
+        """
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = best_score
+        self.early_stop = False
+        self.delta = delta
+        self.monitor = monitor
+        self.op_type = op_type
+
+        if self.op_type == 'min':
+            self.val_score_min = np.Inf
+        else:
+            self.val_score_min = 0
+
+    def __call__(self, val_score):
+
+        score = -val_score if self.op_type == 'min' else val_score
+
+        if self.best_score is None:
+            self.best_score = score
+            self.print_and_update(val_score)
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.print_and_update(val_score)
+            self.counter = 0
+
+    def print_and_update(self, val_score):
+        '''print_message when validation score decrease.'''
+        if self.verbose:
+           print(self.monitor, f'optimized ({self.val_score_min:.6f} --> {val_score:.6f}).  Saving model ...')
+        self.val_score_min = val_score

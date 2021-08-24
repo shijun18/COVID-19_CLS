@@ -118,5 +118,5 @@ if __name__ == "__main__":
   label_dict = csv_reader_single(file_path,key_col='id',value_col='label')
 
   path_list = list(label_dict.keys())
-  train,val,_ = get_cross_validation_on_patient(path_list,6,5,label_dict=label_dict)
+  train,val,_ = get_cross_validation_on_patient(path_list,6,2,label_dict=label_dict)
   

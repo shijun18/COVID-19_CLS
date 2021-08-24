@@ -1,46 +1,38 @@
  
-__all__ = ['r3d_18', 'se_r3d_18','da_18','da_se_18','mc3_18', 'r2plus1d_18','r3d_34','vgg16_3d','vgg19_3d',\
-          'se_mc3_18','da_mc3_18','da_se_mc3_18']
+__all__ = ['r3d_18', 'se_r3d_18','da_18','da_se_18','r3d_34','se_r3d_34','da_34','da_se_34','vgg16_3d','vgg19_3d']
 
-from utils import get_weight_path
+from utils import get_weight_path,get_weight_list
 
-NET_NAME = 'da_se_18'
-VERSION = 'v4'
-DEVICE = '3'
+NET_NAME = 'r3d_34'
+VERSION = 'v5.0'
+DEVICE = '0,1'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
-# 0,1,2,3,4
-CURRENT_FOLD = 0
+# 1,2,3,4,5
+CURRENT_FOLD = 1
 GPU_NUM = len(DEVICE.split(','))
+FOLD_NUM = 5
 
 
-'''
-WEIGHT_PATH_DICT = {
-  'r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.45322-val_loss:0.35240.pth'.format('v1.4'),
-  'se_r3d_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:15-train_loss:0.27431-val_loss:0.19606.pth'.format('v4.4'),
-  'da_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:7-train_loss:0.32471-val_loss:0.25842.pth'.format('v10.4'),
-  'da_se_18':'/staff/shijun/torch_projects/COVID-19_CLS/ckpt/{}/epoch:32-train_loss:0.13142-val_loss:0.15287.pth'.format('v11.0'),
-}
-
-WEIGHT_PATH = WEIGHT_PATH_DICT[NET_NAME]
-print(WEIGHT_PATH)
-'''
-# CKPT_PATH = './new_ckpt/{}'.format(VERSION)
-CKPT_PATH = './tmp_ckpt/{}'.format(VERSION)
+CKPT_PATH = './tmp_ckpt/{}/fold{}'.format(VERSION,CURRENT_FOLD)
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
-print(WEIGHT_PATH)
+# print(WEIGHT_PATH)
 
+if PRE_TRAINED:
+    WEIGHT_PATH_LIST = get_weight_list('./tmp_ckpt/{}/'.format(VERSION))
+else:
+    WEIGHT_PATH_LIST = None
 
 # Arguments when trainer initial
 INIT_TRAINER = {
   'net_name':NET_NAME,
   'lr':1e-3, 
-  'n_epoch':100,
+  'n_epoch':120,
   'channels':1,
   'num_classes':3,
   'input_shape':(64,224,224),
   'crop':None,
-  'batch_size':6,
+  'batch_size':8,
   'num_workers':2,
   'device':DEVICE,
   'pre_trained':PRE_TRAINED,
@@ -48,7 +40,7 @@ INIT_TRAINER = {
   'weight_decay': 0.,
   'momentum': 0.9,
   'gamma': 0.1,
-  'milestones': [30,60],
+  'milestones': [30,60,90],
   'T_max':5,
   'use_fp16':False
  }
