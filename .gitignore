@@ -1,8 +1,8 @@
 .ipynb_checkpoints/
 dataset/
 txt_recorder/
-log/
-ckpt/
+*log/
+*ckpt/
 .vscode/
 __pycache__/
 mid_feature/

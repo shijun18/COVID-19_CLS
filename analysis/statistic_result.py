@@ -74,21 +74,21 @@ if __name__ == '__main__':
     
     # statistics metric 
     # input_path = './tmp_result'
-    # result_path = './tmp_result_metric.csv'
+    # result_path = './csv_file/tmp_result_metric.csv'
     # input_path = './new_result'
-    # result_path = './new_result_metric.csv'
+    # result_path = './csv_file/new_result_metric.csv'
     input_path = './final_result'
-    result_path = './final_result_metric.csv'
+    result_path = './csv_file/final_result_metric.csv'
     net_name = ['r3d_18', 'se_r3d_18','da_18','da_se_18']
     statistics_metric(input_path,result_path,net_name,[1.0,2.0,3.0,4.0])
 
     # statistics AUC
     # input_path = './tmp_result'
-    # result_path = './tmp_result_auc.csv'
+    # result_path = './csv_file/tmp_result_auc.csv'
     # input_path = './new_result'
-    # result_path = './new_result_auc.csv'
+    # result_path = './csv_file/new_result_auc.csv'
     input_path = './final_result'
-    result_path = './final_result_auc.csv'
+    result_path = './csv_file/final_result_auc.csv'
     net_name = ['r3d_18', 'se_r3d_18','da_18','da_se_18']
     labels_name = ['CP','COVID-19','Normal']
     statistics_auc(input_path,result_path,net_name,labels_name,[1.0,2.0,3.0,4.0])
