@@ -69,7 +69,7 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dic
     _len_ = len(patient_list) // fold_num
     train_id = []
     validation_id = []
-    
+  
 
     end_index = current_fold * _len_
     start_index = end_index - _len_
@@ -77,6 +77,11 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dic
     validation_id.extend(patient_list[start_index:end_index])
     train_id.extend(patient_list[:start_index])
     train_id.extend(patient_list[end_index:_len_*(fold_num-1)])
+    test_id = [item for item in patient_list if item not in train_id + validation_id]
+
+    print("Train patient number:", len(train_id),
+          "\nVal patient number:", len(validation_id),
+          '\nTest patient number:',len(test_id))
 
     train_path = []
     validation_path = []
@@ -108,6 +113,49 @@ def get_cross_validation_on_patient(path_list, fold_num, current_fold, label_dic
     print('test CP:',test_label.count(0))
     print('test NCP:',test_label.count(1))
     print('test Normal:',test_label.count(2))
+
+
+    train_cp = [case for case in train_path if label_dict[case] == 0]
+    train_cp = [os.path.basename(case).split('_')[0]for case in train_cp]
+    train_cp = len(set(train_cp))
+    train_ncp = [case for case in train_path if label_dict[case] == 1]
+    train_ncp = [os.path.basename(case).split('_')[0]for case in train_ncp]
+    train_ncp = len(set(train_ncp))
+    train_normal = [case for case in train_path if label_dict[case] == 2]
+    train_normal = [os.path.basename(case).split('_')[0]for case in train_normal]
+    train_normal = len(set(train_normal))
+
+    print('Train CP patient number:%d'%train_cp)
+    print('Train NCP patient number:%d'%train_ncp)
+    print('Train Normal patient number:%d'%train_normal)
+
+    val_cp = [case for case in validation_path if label_dict[case] == 0]
+    val_cp = [os.path.basename(case).split('_')[0]for case in val_cp]
+    val_cp = len(set(val_cp))
+    val_ncp = [case for case in validation_path if label_dict[case] == 1]
+    val_ncp = [os.path.basename(case).split('_')[0]for case in val_ncp]
+    val_ncp = len(set(val_ncp))
+    val_normal = [case for case in validation_path if label_dict[case] == 2]
+    val_normal = [os.path.basename(case).split('_')[0]for case in val_normal]
+    val_normal = len(set(val_normal))
+
+    print('Val CP patient number:%d'%val_cp)
+    print('Val NCP patient number:%d'%val_ncp)
+    print('Val Normal patient number:%d'%val_normal)
+
+    test_cp = [case for case in test_path if label_dict[case] == 0]
+    test_cp = [os.path.basename(case).split('_')[0]for case in test_cp]
+    test_cp = len(set(test_cp))
+    test_ncp = [case for case in test_path if label_dict[case] == 1]
+    test_ncp = [os.path.basename(case).split('_')[0]for case in test_ncp]
+    test_ncp = len(set(test_ncp))
+    test_normal = [case for case in test_path if label_dict[case] == 2]
+    test_normal = [os.path.basename(case).split('_')[0]for case in test_normal]
+    test_normal = len(set(test_normal))
+
+    print('Test CP patient number:%d'%test_cp)
+    print('Test NCP patient number:%d'%test_ncp)
+    print('Test Normal patient number:%d'%test_normal)
 
     return train_path, validation_path,test_path
 

@@ -27,7 +27,7 @@ else:
 INIT_TRAINER = {
   'net_name':NET_NAME,
   'lr':1e-3, 
-  'n_epoch':120,
+  'n_epoch':80,
   'channels':1,
   'num_classes':3,
   'input_shape':(64,224,224),
@@ -52,6 +52,6 @@ SETUP_TRAINER = {
   'optimizer':'Adam',
   'loss_fun':'Cross_Entropy',
   'class_weight':None,
-  'lr_scheduler':'MultiStepLR'
+  'lr_scheduler':'CosineAnnealingLR' # MultiStepLR
   }
 
