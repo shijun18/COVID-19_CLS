@@ -52,6 +52,6 @@ SETUP_TRAINER = {
   'optimizer':'Adam',
   'loss_fun':'Cross_Entropy',
   'class_weight':None,
-  'lr_scheduler':'CosineAnnealingLR' # MultiStepLR
+  'lr_scheduler':'MultiStepLR' # MultiStepLR
   }
 
